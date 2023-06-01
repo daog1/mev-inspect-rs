@@ -238,7 +238,7 @@ impl<M: Middleware + Unpin + 'static> Stream for BatchEvaluator<M> {
                         .transactions
                         .iter()
                         .map(|tx| (tx.hash, tx.gas_price))
-                        .collect::<HashMap<TxHash, U256>>();
+                        .collect::<HashMap<TxHash, Option<U256>>>();
 
                     let gas_used_txs = receipts
                         .into_iter()
@@ -262,10 +262,10 @@ impl<M: Middleware + Unpin + 'static> Stream for BatchEvaluator<M> {
                             .unwrap_or_default();
 
                         if this.evaluations_queue.len() < this.max {
-                            this.queue_in_evaluation(inspection, gas_used, gas_price)
+                            this.queue_in_evaluation(inspection, gas_used, gas_price.unwrap())
                         } else {
                             this.waiting_inspections
-                                .push_back((inspection, gas_used, gas_price));
+                                .push_back((inspection, gas_used, gas_price.unwrap()));
                         }
                     }
                 }

@@ -2,29 +2,39 @@
 name = "mev-inspect"
 version = "0.1.0"
 authors = ["Georgios Konstantopoulos <me@gakonst.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
-ethers = { version = "0.2.1", features = ["abigen"] }
-serde_json = "1.0.61"
-once_cell = "1.5.2"
-itertools = "0.10.0"
-anyhow = "1.0.37"
+ethers = { version = "2.0.4", default-features = false }
+ethers-core = { version = "2.0.4", default-features = false }
+ethers-contract = { version = "2.0.4", default-features = false }
+ethers-contract-abigen = { version = "2.0.4", default-features = false }
+ethers-providers = { version = "2.0.4", default-features = false }
+ethers-signers = { version = "2.0.4", default-features = false }
+ethers-middleware = { version = "2.0.4", default-features = false }
+ethers-etherscan = { version = "2.0.4", default-features = false }
+ethers-solc = { version = "2.0.4", default-features = false }
+once_cell = "1.17.2"
+serde_json = "1.0.96"
 
-# cached provider
-thiserror = "1.0.23"
-async-trait = "0.1.42"
-serde = "1.0.118"
+thiserror = "1.0.40"
+anyhow = "1.0.71"
+async-trait = "0.1.68"
+futures = "0.3"
+serde = "1.0.163"
+rust_decimal = { version = "1.29.1", features = [
+  "db-postgres",
+  "db-tokio-postgres",
+] }
 
-# postgres connection
-tokio = { version = "1.0.2", features = ["macros", "rt-multi-thread"] }
-tokio-postgres = "0.7.0"
-rust_decimal = { version = "1.10.0", features = ["db-postgres", "db-tokio-postgres"] }
-gumdrop = "0.8.0"
-futures = "0.3.8"
-hex = "0.4.2"
-log = "0.4.14"
-pretty_env_logger = "0.4.0"
 
-[features]
-postgres-tests = []
+tokio-postgres = "0.7.8"
+itertools = "0.10.5"
+log = "0.4.18"
+hex = "0.4.3"
+
+tokio = { version = "1.28.2", features = ["full"] }
+
+gumdrop = "0.8.1"
+pretty_env_logger = "0.5.0"
+env_logger = "0.10"

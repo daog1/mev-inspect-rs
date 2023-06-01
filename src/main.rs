@@ -4,6 +4,7 @@ use mev_inspect::{
     types::Evaluation,
     BatchInserts, BatchInspector, CachedProvider, HistoricalPrice, Inspector, MevDB, Reducer,
 };
+use env_logger::Target;
 
 use ethers::{
     providers::{Middleware, Provider, StreamExt},
@@ -76,7 +77,24 @@ struct BlockOpts {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    pretty_env_logger::init();
+    //pretty_env_logger::init();
+    let mut pb = pretty_env_logger::formatted_builder();
+    pb.format(|f, record| {
+        use std::io::Write;
+
+        writeln!(
+            f,
+            " {} {}:{} > {}",
+            record.level(),
+            record.file().unwrap(),
+            record.line().unwrap(),
+            record.args(),
+        )
+    });
+    if let Ok(s) = ::std::env::var("RUST_LOG") {
+        pb.parse_filters(&s);
+    }
+    pb.init();
     let opts = Opts::parse_args_default_or_exit();
 
     // Instantiate the provider and read from the cached files if needed
@@ -144,7 +162,7 @@ async fn run<M: Middleware + Clone + 'static>(provider: M, opts: Opts) -> anyhow
                         .gas_price;
 
                     let evaluation =
-                        Evaluation::new(inspection, &prices, gas_used, gas_price).await?;
+                        Evaluation::new(inspection, &prices, gas_used, gas_price.unwrap()).await?;
                     println!("Found: {:?}", evaluation.as_ref().hash);
                     println!("Revenue: {:?} WEI", evaluation.profit);
                     println!("Cost: {:?} WEI", evaluation.gas_used * evaluation.gas_price);
@@ -289,10 +307,10 @@ async fn process_block<M: Middleware + 'static>(
         .transactions
         .iter()
         .map(|tx| (tx.hash, tx.gas_price))
-        .collect::<HashMap<TxHash, U256>>();
+        .collect::<HashMap<TxHash, Option<U256>>>();
 
     // get all the receipts
-    let receipts = provider.parity_block_receipts(block_number).await?;
+    let receipts = provider.get_block_receipts(block_number).await?;
     let gas_used_txs = receipts
         .into_iter()
         .map(|receipt| {
@@ -316,7 +334,7 @@ async fn process_block<M: Middleware + 'static>(
             .get(&inspection.hash)
             .cloned()
             .unwrap_or_default();
-        Evaluation::new(inspection, &prices, gas_used, gas_price)
+        Evaluation::new(inspection, &prices, gas_used, gas_price.unwrap())
     });
     for evaluation in futures::future::join_all(eval_futs).await {
         if let Ok(evaluation) = evaluation {

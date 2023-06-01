@@ -1,11 +1,11 @@
 use async_trait::async_trait;
 use ethers::{
-    providers::{FromErr, Middleware},
+    providers::Middleware,
     types::{BlockNumber, Trace},
 };
 use serde::{de::DeserializeOwned, Serialize};
 use std::path::{Path, PathBuf};
-
+use ethers::prelude::MiddlewareError;
 #[derive(Clone, Debug)]
 pub struct CachedProvider<M> {
     inner: M,
@@ -94,9 +94,17 @@ pub enum CachedProviderError<M: Middleware> {
     #[error(transparent)]
     DeserializationError(#[from] serde_json::Error),
 }
+impl<M: Middleware> MiddlewareError for CachedProviderError<M> {
+    type Inner = M::Error;
 
-impl<M: Middleware> FromErr<M::Error> for CachedProviderError<M> {
-    fn from(src: M::Error) -> Self {
+    fn from_err(src: M::Error) -> CachedProviderError<M> {
         CachedProviderError::MiddlewareError(src)
+    }
+
+    fn as_inner(&self) -> Option<&Self::Inner> {
+        match self {
+            CachedProviderError::MiddlewareError(e) => Some(e),
+            _ => None,
+        }
     }
 }
